@@ -141,6 +141,9 @@
   <ItemGroup>
     <ClCompile Include="quad.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\quad.in" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

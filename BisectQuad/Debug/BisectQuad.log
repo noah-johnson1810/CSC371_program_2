@@ -1,2 +1,3 @@
 ﻿  quad.cpp
+C:\Users\7507264\source\repos\BisectQuad\BisectQuad\quad.cpp(56,20): warning C4018: '<': signed/unsigned mismatch
   BisectQuad.vcxproj -> C:\Users\7507264\source\repos\BisectQuad\Debug\BisectQuad.exe
