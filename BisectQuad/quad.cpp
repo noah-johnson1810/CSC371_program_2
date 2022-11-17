@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
+#include <iomanip>
 
 using namespace std;
 
@@ -12,44 +13,20 @@ struct Point
     double y;
 };
 
-bool comparePoints(Point p1, Point p2)
+bool comparePointsX(Point p1, Point p2)
 {
     if (p1.x != p2.x)
         return p1.x < p2.x;
     else
-        return p1.y < p2.y;
+        return p1.y > p2.y;
 }
 
-// this function is based on w3schools "find intersection" algorithm
-Point findIntersection(Point A, Point B, Point C, Point D)
+bool comparePointsY(Point p1, Point p2)
 {
-    // Line AB represented as a1x + b1y = c1
-    double a1 = B.y - A.y;
-    double b1 = A.x - B.x;
-    double c1 = a1 * (A.x) + b1 * (A.y);
-
-    // Line CD represented as a2x + b2y = c2
-    double a2 = D.y - C.y;
-    double b2 = C.x - D.x;
-    double c2 = a2 * (C.x) + b2 * (C.y);
-
-    double determinant = a1 * b2 - a2 * b1;
-
-    // parallel lines, shouldn't happen but doesn't hurt to check
-    if (determinant == 0)
-    {
-        Point p;
-        p.x = -1;
-        p.y = -1;
-        return p;
-    }
+    if (p1.y != p2.y)
+        return p1.y < p2.y;
     else
-    {
-        Point returnPoint;
-        returnPoint.x = round((b2 * c1 - b1 * c2) / determinant);
-        returnPoint.y = round((a1 * c2 - a2 * c1) / determinant);
-        return returnPoint;
-    }
+        return p1.x < p2.x;
 }
 
 // this comes from Dr. Corwin's D2L link, modified to accept vector instead of c-style array
@@ -68,32 +45,44 @@ double area(vector<Point> p, int n)
     return fabs(result / 2);
 }
 
+
 double bisectQuad(vector<Point> v) {
+    double totalArea = area(v, 4);
+    double leftArea = -1;
+    double rightArea = -1;
+    double slope, point;
+    double minimum, maximum;
+    double verticalLineX;
 
-    double left_area = -1;
-    double right_area = -1;
-    double verticalLineXCoordinate = v[0].x + ((v[3].x - v[0].x) / 2.0);
+    auto minmax = minmax_element(v.begin(), v.end(), [](Point const& lhs, Point const& rhs) { return lhs.x < rhs.x; });
+    minimum = minmax.first->x;
+    maximum = minmax.second->x;
+    verticalLineX = (maximum + minimum) / 2.0;
+
     do {
-        // TODO: figure out where the vertical line x coordinate should move to each time
-        Point topVerticalLine;
-        topVerticalLine.x = verticalLineXCoordinate;
-        topVerticalLine.y = 1000001;
+        verticalLineX = (maximum + minimum) / 2.0;
+        vector<Point> leftRegion;
+        for (int i = 0, j = v.size() - 1; i < v.size(); j = i, i++) {
+            if (v[i].x < verticalLineX && v[j].x > verticalLineX || v[i].x > verticalLineX && v[j].x < verticalLineX) {
+                slope = (v[j].y - v[i].y) / (v[j].x - v[i].x);
+                point = verticalLineX - v[i].x;
 
-        Point bottomVerticalLine;
-        bottomVerticalLine.x = verticalLineXCoordinate;
-        bottomVerticalLine.y = -1;
 
-        Point topIntersection = findIntersection(v[1], v[3], topVerticalLine, bottomVerticalLine);
-        Point bottomIntersection = findIntersection(v[0], v[2], topVerticalLine, bottomVerticalLine);
+                leftRegion.push_back({ verticalLineX, slope * point + v[i].y });
+            }
 
-        vector<Point> left_region = { v[0], v[1], topIntersection, bottomIntersection };
+            if (v[i].x <= verticalLineX)
+                leftRegion.push_back(v[i]);
+        }
 
-        vector<Point> right_region = { topIntersection, bottomIntersection, v[2], v[3] };
+        leftArea = area(leftRegion, int(leftRegion.size()));
+        if ((totalArea / 2.0) - leftArea > 0.00001)
+            minimum = verticalLineX;
+        else if ((totalArea / 2.0) - leftArea < -0.00001)
+            maximum = verticalLineX;
+    } while (abs((totalArea / 2.0) - leftArea) > 0.00001);
 
-        left_area = area(left_region, 4);
-        right_area = area(right_region, 4);
-    } while (left_area - right_area > 0.0001);
-    return verticalLineXCoordinate;
+    return verticalLineX;
 }
 
 int main(int argc, char** argv)
@@ -130,23 +119,29 @@ int main(int argc, char** argv)
         return -3;
     }
 
-    // TODO: loop the next 15 lines until EOF
-    vector<Point> v;
-    int lastInput = -2;
-    while (lastInput != -1) {
-        Point newPoint;
-        fin >> newPoint.x;
-        fin >> lastInput;
-        newPoint.y = lastInput;
-        v.push_back(newPoint);
+    bool stop = false;
+    int caseCount = 1;
+
+    while (stop == false) {
+        vector<Point> v;
+        for (int i = 0; i < 4; i++) {
+            Point newPoint;
+            fin >> newPoint.x;
+            fin >> newPoint.y;
+            if (newPoint.x == -1 || newPoint.y == -1) {
+                stop = true;
+                break;
+            }
+            v.push_back(newPoint);
+        }
+        if (stop == true)
+            break;
+        double verticalLineXCoordinate = bisectQuad(v);
+        // change to file output
+        cout << "Case " << caseCount << ": " << fixed << setprecision(5) << verticalLineXCoordinate << "\n";
+        v.clear();
+        caseCount += 1;
     }
-    v.pop_back();
-    sort(v.begin(), v.end(), comparePoints);
-    double verticalLineXCoordinate = bisectQuad(v);
-    // TODO: Format and file output
-    cout << verticalLineXCoordinate;
-
-
     fin.close();
     fout.close();
 }
